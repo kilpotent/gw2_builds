@@ -8,6 +8,10 @@
   transform: translateY(-3px);
 }
 
+.buildCard :global(.card-body) {
+  padding: 0;
+}
+
 .ownBuild {
   cursor: pointer;
   border-color: #0d6efd;
