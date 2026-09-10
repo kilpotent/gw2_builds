@@ -1,0 +1,46 @@
+.buildCard {
+  transition: transform 0.15s ease;
+}
+
+.buildCard:hover {
+  transform: translateY(-3px);
+}
+
+.linesRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.lineChip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lineChip img {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.traitIcons {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.traitIcons img {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+
+.emptyTrait {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px dashed #ced4da;
+  display: inline-block;
+}

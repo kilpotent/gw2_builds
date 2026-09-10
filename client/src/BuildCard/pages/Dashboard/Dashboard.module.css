@@ -1,0 +1,7 @@
+.characterCard {
+  transition: transform 0.15s ease;
+}
+
+.characterCard:hover {
+  transform: translateY(-3px);
+}
