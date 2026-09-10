@@ -9,7 +9,7 @@ router.get("/public", async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT builds.id, builds.build_name, builds.game_mode, builds.data, builds.created_at,
-              characters.name AS character_name, characters.profession
+              characters.name AS character_name, characters.profession, characters.user_id AS owner_id
        FROM builds
        JOIN characters ON builds.character_id = characters.id
        WHERE builds.is_public = true

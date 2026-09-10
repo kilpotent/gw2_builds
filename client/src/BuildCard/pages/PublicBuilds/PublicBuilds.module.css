@@ -6,6 +6,11 @@
   transform: translateY(-3px);
 }
 
+.ownBuild {
+  cursor: pointer;
+  border-color: #0d6efd;
+}
+
 .linesRow {
   display: flex;
   flex-direction: column;

@@ -41,3 +41,7 @@ export async function updateBuild(id, { buildName, gameMode, data, isPublic }) {
   });
   return response.data.build;
 }
+
+export async function deleteBuild(id) {
+  await api.delete(`/builds/${id}`);
+}

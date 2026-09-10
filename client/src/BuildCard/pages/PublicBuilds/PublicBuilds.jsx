@@ -1,8 +1,12 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { getPublicBuilds } from "../../services/buildService";
 import styles from "./PublicBuilds.module.css";
 
 function PublicBuilds() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [builds, setBuilds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -28,9 +32,15 @@ function PublicBuilds() {
       )}
 
       <div className="row g-3">
-        {builds.map((build) => (
+        {builds.map((build) => {
+          const isOwner = user && build.owner_id === user.id;
+          return (
           <div className="col-md-6 col-lg-4" key={build.id}>
-            <div className={`card h-100 ${styles.buildCard}`}>
+            <div
+              className={`card h-100 ${styles.buildCard} ${isOwner ? styles.ownBuild : ""}`}
+              role={isOwner ? "button" : undefined}
+              onClick={isOwner ? () => navigate(`/my-builds?highlight=${build.id}`) : undefined}
+            >
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-start mb-2">
                   <div>
@@ -40,6 +50,7 @@ function PublicBuilds() {
                       {build.game_mode ? ` · ${build.game_mode}` : ""}
                     </p>
                   </div>
+                  {isOwner && <span className="badge text-bg-primary">Yours</span>}
                 </div>
 
                 <div className={styles.linesRow}>
@@ -72,7 +83,8 @@ function PublicBuilds() {
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

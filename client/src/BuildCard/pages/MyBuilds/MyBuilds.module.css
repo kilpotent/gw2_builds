@@ -5,3 +5,8 @@
 .buildCard:hover {
   transform: translateY(-3px);
 }
+
+.highlighted {
+  border: 2px solid #0d6efd;
+  box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.2);
+}
