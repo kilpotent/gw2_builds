@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { getMyBuilds, deleteBuild } from "../../services/buildService";
+import professionBackgrounds from "../../../assets/images/build-background-images/professionBackgrounds";
 import styles from "./MyBuilds.module.css";
 
 function MyBuilds() {
@@ -67,36 +68,39 @@ function MyBuilds() {
                 className={`card h-100 ${styles.buildCard} ${
                   isHighlighted ? styles.highlighted : ""
                 }`}
+                style={{ backgroundImage: `url(${professionBackgrounds[build.profession]})` }}
               >
                 <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                      <h5 className="card-title mb-0">{build.build_name}</h5>
-                      <p className="card-subtitle text-muted small">
-                        {build.character_name} · {build.profession}
-                        {build.game_mode ? ` · ${build.game_mode}` : ""}
-                      </p>
+                  <div className={styles.contentPanel}>
+                    <div className="d-flex justify-content-between align-items-start mb-2">
+                      <div>
+                        <h5 className="card-title mb-0">{build.build_name}</h5>
+                        <p className={`card-subtitle small ${styles.cardSubtitle}`}>
+                          {build.character_name} · {build.profession}
+                          {build.game_mode ? ` · ${build.game_mode}` : ""}
+                        </p>
+                      </div>
+                      {!build.is_public && (
+                        <span className="badge text-bg-secondary">Private</span>
+                      )}
                     </div>
-                    {!build.is_public && (
-                      <span className="badge text-bg-secondary">Private</span>
-                    )}
-                  </div>
 
-                  <div className="d-flex gap-2">
-                    <Link
-                      className="btn btn-outline-primary btn-sm"
-                      to={`/builder/${build.id}`}
-                    >
-                      Edit
-                    </Link>
-                    <button
-                      type="button"
-                      className="btn btn-outline-danger btn-sm"
-                      disabled={deletingId === build.id}
-                      onClick={() => handleDelete(build.id, build.build_name)}
-                    >
-                      {deletingId === build.id ? "Deleting..." : "Delete"}
-                    </button>
+                    <div className="d-flex gap-2">
+                      <Link
+                        className="btn btn-primary btn-sm"
+                        to={`/builder/${build.id}`}
+                      >
+                        Edit
+                      </Link>
+                      <button
+                        type="button"
+                        className="btn btn-danger btn-sm"
+                        disabled={deletingId === build.id}
+                        onClick={() => handleDelete(build.id, build.build_name)}
+                      >
+                        {deletingId === build.id ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
