@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import TraitLineSelector from "../../../components/TraitLineSelector/TraitLineSelector";
 import { useAuth } from "../../context/AuthContext";
 import { getProfessions } from "../../services/gw2Api";
 import { getCharacters } from "../../services/characterService";
-import { createBuild } from "../../services/buildService";
+import { createBuild, getBuild, updateBuild } from "../../services/buildService";
 import styles from "./BuildEditor.module.css";
 
 const PROFESSION_IDS = [
@@ -23,10 +23,13 @@ const GAME_MODES = ["PvE", "PvP", "WvW"];
 
 function BuildEditor() {
   const { user } = useAuth();
+  const { buildId } = useParams();
+  const isEditing = Boolean(buildId);
 
   const [professions, setProfessions] = useState([]);
   const [profession, setProfession] = useState(null);
   const [lines, setLines] = useState([null, null, null]);
+  const [initialLines, setInitialLines] = useState(null);
 
   const [buildName, setBuildName] = useState("");
   const [gameMode, setGameMode] = useState(GAME_MODES[0]);
@@ -34,6 +37,9 @@ function BuildEditor() {
 
   const [characters, setCharacters] = useState([]);
   const [characterId, setCharacterId] = useState("");
+
+  const [loadingExisting, setLoadingExisting] = useState(isEditing);
+  const [loadError, setLoadError] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -60,8 +66,39 @@ function BuildEditor() {
   }, [user]);
 
   useEffect(() => {
+    if (!buildId) return;
+
+    let cancelled = false;
+    setLoadingExisting(true);
+    setLoadError("");
+
+    getBuild(buildId)
+      .then((build) => {
+        if (cancelled) return;
+        setProfession(build.data.profession);
+        setInitialLines(build.data.lines);
+        setBuildName(build.build_name);
+        setGameMode(build.game_mode || GAME_MODES[0]);
+        setIsPublic(build.is_public);
+        setCharacterId(String(build.character_id));
+      })
+      .catch(() => {
+        if (!cancelled) setLoadError("This build doesn't exist or isn't yours to edit.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingExisting(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [buildId]);
+
+  function handleProfessionClick(profId) {
+    if (isEditing) return;
+    setProfession(profId);
     setCharacterId("");
-  }, [profession]);
+  }
 
   const matchingCharacters = characters.filter((c) => c.profession === profession);
   const isComplete =
@@ -84,31 +121,56 @@ function BuildEditor() {
 
     try {
       setSaving(true);
-      await createBuild({
-        characterId,
-        buildName: buildName.trim(),
-        gameMode,
-        isPublic,
-        data: {
-          profession,
-          lines,
-        },
-      });
-      setSaveSuccess("Build saved!");
+      if (isEditing) {
+        await updateBuild(buildId, {
+          buildName: buildName.trim(),
+          gameMode,
+          isPublic,
+          data: { profession, lines },
+        });
+        setSaveSuccess("Build updated!");
+      } else {
+        await createBuild({
+          characterId,
+          buildName: buildName.trim(),
+          gameMode,
+          isPublic,
+          data: { profession, lines },
+        });
+        setSaveSuccess("Build saved!");
+      }
     } catch {
-      setSaveError("The build couldn't be saved.");
+      setSaveError(
+        isEditing ? "The build couldn't be updated." : "The build couldn't be saved.",
+      );
     } finally {
       setSaving(false);
     }
   }
 
+  if (loadingExisting) {
+    return (
+      <div className="container mt-4 mb-5">
+        <p className="text-muted">Loading build…</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="container mt-4 mb-5">
+        <div className="alert alert-danger">{loadError}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mt-4 mb-5">
-      <h2 className="mb-3">Build Editor</h2>
+      <h2 className="mb-3">{isEditing ? "Edit Build" : "Build Editor"}</h2>
       <p className="text-muted">
-        Pick a profession, then hover any specialization option below to preview
-        its traits before choosing it. Any of the 3 lines can hold a core or an
-        elite specialization.
+        {isEditing
+          ? "Editing an existing build — the profession and character are locked, but specializations, traits, and details below can be changed."
+          : "Pick a profession, then hover any specialization option below to preview its traits before choosing it. Any of the 3 lines can hold a core or an elite specialization."}
       </p>
 
       <div className={styles.professionGrid}>
@@ -119,7 +181,8 @@ function BuildEditor() {
             className={`${styles.professionButton} ${
               profession === prof.id ? styles.professionSelected : ""
             }`}
-            onClick={() => setProfession(prof.id)}
+            onClick={() => handleProfessionClick(prof.id)}
+            disabled={isEditing}
           >
             <img src={prof.icon} alt={prof.name} />
             <span>{prof.name}</span>
@@ -132,6 +195,7 @@ function BuildEditor() {
           <TraitLineSelector
             key={profession}
             profession={profession}
+            initialLines={initialLines}
             onChange={setLines}
           />
         </div>
@@ -139,7 +203,7 @@ function BuildEditor() {
 
       {profession && (
         <form className={`${styles.saveForm} mt-4`} onSubmit={handleSave}>
-          <h4>Save this build</h4>
+          <h4>{isEditing ? "Save changes" : "Save this build"}</h4>
 
           {!isComplete && (
             <div className="alert alert-warning">
@@ -180,7 +244,7 @@ function BuildEditor() {
                 className="form-select"
                 value={characterId}
                 onChange={(e) => setCharacterId(e.target.value)}
-                disabled={!user || matchingCharacters.length === 0}
+                disabled={!user || matchingCharacters.length === 0 || isEditing}
               >
                 <option value="">-- choose --</option>
                 {matchingCharacters.map((c) => (
@@ -235,7 +299,12 @@ function BuildEditor() {
           {saveError && <div className="alert alert-danger mt-3">{saveError}</div>}
           {saveSuccess && (
             <div className="alert alert-success mt-3">
-              {saveSuccess} <Link to="/">View public builds</Link>
+              {saveSuccess}{" "}
+              {isEditing ? (
+                <Link to="/my-builds">Back to My Builds</Link>
+              ) : (
+                <Link to="/">View public builds</Link>
+              )}
             </div>
           )}
         </form>

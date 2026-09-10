@@ -28,6 +28,9 @@ function Navbar() {
 
           {user ? (
             <>
+              <Link className="btn btn-outline-light btn-sm" to="/my-builds">
+                My Builds
+              </Link>
               <Link className="btn btn-outline-light btn-sm" to="/dashboard">
                 Dashboard
               </Link>

@@ -8,6 +8,20 @@ import styles from "./TraitLineSelector.module.css";
 
 const EMPTY_LINE = () => ({ specId: null, traitIds: [null, null, null] });
 
+// Converts the denormalized shape produced by onChange (used for saving)
+// back into the internal {specId, traitIds} shape, to preload an edit.
+function toInternalLines(initialLines) {
+  if (!initialLines) return [EMPTY_LINE(), EMPTY_LINE(), EMPTY_LINE()];
+  return [0, 1, 2].map((i) => {
+    const line = initialLines[i];
+    if (!line) return EMPTY_LINE();
+    return {
+      specId: line.specialization?.id ?? null,
+      traitIds: [0, 1, 2].map((t) => line.traits?.[t]?.id ?? null),
+    };
+  });
+}
+
 // GW2 trait descriptions sometimes contain markup like <c=@reminder>...</c>
 function cleanDescription(text) {
   if (!text) return "";
@@ -25,13 +39,13 @@ function groupTraitsByTier(spec, traitsById) {
 // in a slot's dropdown previews all of that specialization's traits before
 // it's chosen; any slot may hold a core or an elite spec, but only one
 // elite spec can be active at once (matches in-game rules).
-function TraitLineSelector({ profession, onChange }) {
+function TraitLineSelector({ profession, initialLines, onChange }) {
   const [specs, setSpecs] = useState([]);
   const [traitsById, setTraitsById] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [lines, setLines] = useState([EMPTY_LINE(), EMPTY_LINE(), EMPTY_LINE()]);
+  const [lines, setLines] = useState(() => toInternalLines(initialLines));
   const [openSlot, setOpenSlot] = useState(null);
   const [hoveredSpecId, setHoveredSpecId] = useState(null);
   const [infoTrait, setInfoTrait] = useState(null);

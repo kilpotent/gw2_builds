@@ -21,3 +21,23 @@ export async function createBuild({
   });
   return response.data.build;
 }
+
+export async function getMyBuilds() {
+  const response = await api.get("/builds/mine");
+  return response.data.builds;
+}
+
+export async function getBuild(id) {
+  const response = await api.get(`/builds/${id}`);
+  return response.data.build;
+}
+
+export async function updateBuild(id, { buildName, gameMode, data, isPublic }) {
+  const response = await api.put(`/builds/${id}`, {
+    buildName,
+    gameMode,
+    data,
+    isPublic,
+  });
+  return response.data.build;
+}
