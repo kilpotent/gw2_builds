@@ -22,6 +22,34 @@ router.get("/public", async (req, res) => {
   }
 });
 
+// GET /api/builds/public/:id -> ένα public build, ΧΩΡΙΣ login (πλήρης σελίδα build)
+router.get("/public/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `SELECT builds.id, builds.build_name, builds.game_mode, builds.data, builds.is_public,
+              builds.created_at, builds.updated_at,
+              characters.name AS character_name, characters.profession, characters.user_id AS owner_id
+       FROM builds
+       JOIN characters ON builds.character_id = characters.id
+       WHERE builds.id = $1 AND builds.is_public = true`,
+      [id],
+    );
+
+    const build = result.rows[0];
+
+    if (!build) {
+      return res.status(404).json({ error: "Build δεν βρέθηκε" });
+    }
+
+    res.json({ build });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Κάτι πήγε στραβά" });
+  }
+});
+
 // Από εδώ και κάτω, ΟΛΑ χρειάζονται login
 router.use(requireAuth);
 

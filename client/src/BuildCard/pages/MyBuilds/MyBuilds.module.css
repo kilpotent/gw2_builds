@@ -31,3 +31,25 @@
 .cardSubtitle {
   color: #d8d8d8 !important;
 }
+
+.titleLink {
+  text-decoration: none;
+}
+
+.titleLink:hover :global(.card-title) {
+  text-decoration: underline;
+}
+
+.gearRow {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.3);
+}
+
+.gearRow img {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}

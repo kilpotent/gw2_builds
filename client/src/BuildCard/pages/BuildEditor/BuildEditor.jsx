@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import TraitLineSelector from "../../../components/TraitLineSelector/TraitLineSelector";
+import GearSelector from "../../../components/GearSelector/GearSelector";
 import { useAuth } from "../../context/AuthContext";
-import { getProfessions } from "../../services/gw2Api";
+import { getProfessions, getAmulets } from "../../services/gw2Api";
 import { getCharacters } from "../../services/characterService";
 import { createBuild, getBuild, updateBuild } from "../../services/buildService";
+import { runes, sigils, relics } from "../../../data/gear";
 import styles from "./BuildEditor.module.css";
 
 const PROFESSION_IDS = [
@@ -34,6 +36,14 @@ function BuildEditor() {
   const [buildName, setBuildName] = useState("");
   const [gameMode, setGameMode] = useState(GAME_MODES[0]);
   const [isPublic, setIsPublic] = useState(true);
+  const [description, setDescription] = useState("");
+
+  const [amulets, setAmulets] = useState([]);
+  const [amuletId, setAmuletId] = useState(null);
+  const [runeId, setRuneId] = useState(null);
+  const [sigil1Id, setSigil1Id] = useState(null);
+  const [sigil2Id, setSigil2Id] = useState(null);
+  const [relicId, setRelicId] = useState(null);
 
   const [characters, setCharacters] = useState([]);
   const [characterId, setCharacterId] = useState("");
@@ -52,6 +62,12 @@ function BuildEditor() {
         setProfessions(data.sort((a, b) => order.get(a.id) - order.get(b.id)));
       })
       .catch(() => setProfessions([]));
+  }, []);
+
+  useEffect(() => {
+    getAmulets()
+      .then(setAmulets)
+      .catch(() => setAmulets([]));
   }, []);
 
   useEffect(() => {
@@ -81,6 +97,13 @@ function BuildEditor() {
         setGameMode(build.game_mode || GAME_MODES[0]);
         setIsPublic(build.is_public);
         setCharacterId(String(build.character_id));
+        setDescription(build.data.description || "");
+        const gear = build.data.gear || {};
+        setAmuletId(gear.amulet?.id ?? null);
+        setRuneId(gear.rune?.id ?? null);
+        setSigil1Id(gear.sigils?.[0]?.id ?? null);
+        setSigil2Id(gear.sigils?.[1]?.id ?? null);
+        setRelicId(gear.relic?.id ?? null);
       })
       .catch(() => {
         if (!cancelled) setLoadError("This build doesn't exist or isn't yours to edit.");
@@ -98,6 +121,12 @@ function BuildEditor() {
     if (isEditing) return;
     setProfession(profId);
     setCharacterId("");
+  }
+
+  function pick(list, id) {
+    if (!id) return null;
+    const item = list.find((o) => o.id === id);
+    return item ? { id: item.id, name: item.name, icon: item.icon } : null;
   }
 
   const matchingCharacters = characters.filter((c) => c.profession === profession);
@@ -119,6 +148,13 @@ function BuildEditor() {
       return;
     }
 
+    const gear = {
+      amulet: pick(amulets, amuletId),
+      rune: pick(runes, runeId),
+      sigils: [pick(sigils, sigil1Id), pick(sigils, sigil2Id)],
+      relic: pick(relics, relicId),
+    };
+
     try {
       setSaving(true);
       if (isEditing) {
@@ -126,7 +162,7 @@ function BuildEditor() {
           buildName: buildName.trim(),
           gameMode,
           isPublic,
-          data: { profession, lines },
+          data: { profession, lines, gear, description: description.trim() },
         });
         setSaveSuccess("Build updated!");
       } else {
@@ -135,7 +171,7 @@ function BuildEditor() {
           buildName: buildName.trim(),
           gameMode,
           isPublic,
-          data: { profession, lines },
+          data: { profession, lines, gear, description: description.trim() },
         });
         setSaveSuccess("Build saved!");
       }
@@ -202,8 +238,63 @@ function BuildEditor() {
       )}
 
       {profession && (
+        <div className={`${styles.gearSection} mt-4`}>
+          <h4>Gear</h4>
+          <div className={styles.gearRow}>
+            <GearSelector
+              label="Amulet"
+              options={amulets}
+              value={amuletId}
+              onChange={setAmuletId}
+              onClear={() => setAmuletId(null)}
+            />
+            <GearSelector
+              label="Rune"
+              options={runes}
+              value={runeId}
+              onChange={setRuneId}
+              onClear={() => setRuneId(null)}
+            />
+            <GearSelector
+              label="Sigil 1"
+              options={sigils}
+              value={sigil1Id}
+              onChange={setSigil1Id}
+              onClear={() => setSigil1Id(null)}
+            />
+            <GearSelector
+              label="Sigil 2"
+              options={sigils}
+              value={sigil2Id}
+              onChange={setSigil2Id}
+              onClear={() => setSigil2Id(null)}
+            />
+            <GearSelector
+              label="Relic"
+              options={relics}
+              value={relicId}
+              onChange={setRelicId}
+              onClear={() => setRelicId(null)}
+            />
+          </div>
+        </div>
+      )}
+
+      {profession && (
         <form className={`${styles.saveForm} mt-4`} onSubmit={handleSave}>
           <h4>{isEditing ? "Save changes" : "Save this build"}</h4>
+
+          <div className="mb-3">
+            <label className="form-label">Playstyle / notes</label>
+            <textarea
+              className="form-control"
+              rows={4}
+              placeholder="Explain the playstyle, rotation, or any variations players can make..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              disabled={!user}
+            />
+          </div>
 
           {!isComplete && (
             <div className="alert alert-warning">

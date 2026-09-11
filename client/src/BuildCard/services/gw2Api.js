@@ -30,3 +30,11 @@ export async function getProfessions(ids) {
   });
   return response.data;
 }
+
+export async function getAmulets() {
+  const idsResponse = await gw2Api.get("/pvp/amulets");
+  const details = await gw2Api.get("/pvp/amulets", {
+    params: { ids: idsResponse.data.join(",") },
+  });
+  return details.data;
+}

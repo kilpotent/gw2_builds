@@ -5,6 +5,11 @@ export async function getPublicBuilds() {
   return response.data.builds;
 }
 
+export async function getPublicBuild(id) {
+  const response = await api.get(`/builds/public/${id}`);
+  return response.data.build;
+}
+
 export async function createBuild({
   characterId,
   buildName,

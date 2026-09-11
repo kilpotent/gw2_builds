@@ -39,3 +39,16 @@
   border-radius: 0.5rem;
   padding: 1rem;
 }
+
+.gearSection {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.gearRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}

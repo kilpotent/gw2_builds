@@ -61,6 +61,11 @@ function MyBuilds() {
       <div className="row g-3">
         {builds.map((build) => {
           const isHighlighted = String(build.id) === highlightId;
+          const gear = build.data?.gear || {};
+          const sigils = gear.sigils || [null, null];
+          const gearPieces = [gear.amulet, gear.rune, sigils[0], sigils[1], gear.relic].filter(
+            Boolean,
+          );
           return (
             <div className="col-md-6 col-lg-4" key={build.id}>
               <div
@@ -74,7 +79,9 @@ function MyBuilds() {
                   <div className={styles.contentPanel}>
                     <div className="d-flex justify-content-between align-items-start mb-2">
                       <div>
-                        <h5 className="card-title mb-0">{build.build_name}</h5>
+                        <Link to={`/build/${build.id}`} className={styles.titleLink}>
+                          <h5 className="card-title mb-0">{build.build_name}</h5>
+                        </Link>
                         <p className={`card-subtitle small ${styles.cardSubtitle}`}>
                           {build.character_name} · {build.profession}
                           {build.game_mode ? ` · ${build.game_mode}` : ""}
@@ -85,7 +92,15 @@ function MyBuilds() {
                       )}
                     </div>
 
-                    <div className="d-flex gap-2">
+                    {gearPieces.length > 0 && (
+                      <div className={styles.gearRow}>
+                        {gearPieces.map((item, idx) => (
+                          <img key={idx} src={item.icon} alt={item.name} title={item.name} />
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="d-flex gap-2 mt-2">
                       <Link
                         className="btn btn-primary btn-sm"
                         to={`/builder/${build.id}`}

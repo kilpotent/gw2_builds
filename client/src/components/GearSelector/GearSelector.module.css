@@ -1,0 +1,127 @@
+.wrapper {
+  position: relative;
+  flex: 1 1 180px;
+  min-width: 180px;
+}
+
+.label {
+  display: block;
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-bottom: 0.2rem;
+}
+
+.slotHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.selectButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 0.375rem;
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.selectButton span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selectButton:hover {
+  border-color: #86b7fe;
+}
+
+.placeholder {
+  color: #6c757d;
+}
+
+.icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.clearBtn {
+  border: none;
+  background: transparent;
+  color: #dc3545;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.25rem 0.4rem;
+  cursor: pointer;
+}
+
+.dropdown {
+  position: absolute;
+  z-index: 30;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 0.25rem;
+  background: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 0.375rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.search {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #e9ecef;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.375rem 0.375rem 0 0;
+}
+
+.search:focus {
+  outline: none;
+  background: #f8f9fa;
+}
+
+.optionList {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.option {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid #f1f1f1;
+  cursor: pointer;
+}
+
+.option:last-child {
+  border-bottom: none;
+}
+
+.option:hover {
+  background: #eef4ff;
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.optionDescription {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: #495057;
+}
+
+.emptyNote {
+  margin: 0;
+  padding: 0.6rem;
+  color: #6c757d;
+  font-size: 0.85rem;
+}

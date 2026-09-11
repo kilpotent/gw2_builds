@@ -35,13 +35,18 @@ function PublicBuilds() {
       <div className="row g-3">
         {builds.map((build) => {
           const isOwner = user && build.owner_id === user.id;
+          const gear = build.data?.gear || {};
+          const sigils = gear.sigils || [null, null];
+          const gearPieces = [gear.amulet, gear.rune, sigils[0], sigils[1], gear.relic].filter(
+            Boolean,
+          );
           return (
           <div className="col-md-6 col-lg-4" key={build.id}>
             <div
               className={`card h-100 ${styles.buildCard} ${isOwner ? styles.ownBuild : ""}`}
               style={{ backgroundImage: `url(${professionBackgrounds[build.profession]})` }}
-              role={isOwner ? "button" : undefined}
-              onClick={isOwner ? () => navigate(`/my-builds?highlight=${build.id}`) : undefined}
+              role="button"
+              onClick={() => navigate(`/build/${build.id}`)}
             >
               <div className="card-body">
                 <div className={styles.contentPanel}>
@@ -83,6 +88,14 @@ function PublicBuilds() {
                       ) : null,
                     )}
                   </div>
+
+                  {gearPieces.length > 0 && (
+                    <div className={styles.gearRow}>
+                      {gearPieces.map((item, idx) => (
+                        <img key={idx} src={item.icon} alt={item.name} title={item.name} />
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
