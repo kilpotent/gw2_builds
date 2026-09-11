@@ -1,8 +1,8 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./BuildCard/pages/Login/Login";
 import Register from "./BuildCard/pages/Register/Register";
 import PublicBuilds from "./BuildCard/pages/PublicBuilds/PublicBuilds";
-import Dashboard from "./BuildCard/pages/Dashboard/Dashboard";
+import Account from "./BuildCard/pages/Account/Account";
 import BuildEditor from "./BuildCard/pages/BuildEditor/BuildEditor";
 import MyBuilds from "./BuildCard/pages/MyBuilds/MyBuilds";
 import BuildDetail from "./BuildCard/pages/BuildDetail/BuildDetail";
@@ -20,11 +20,12 @@ function App() {
         <Route path="/builder/:buildId" element={<BuildEditor />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/dashboard" element={<Navigate to="/account" replace />} />
         <Route
-          path="/dashboard"
+          path="/account"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <Account />
             </ProtectedRoute>
           }
         />

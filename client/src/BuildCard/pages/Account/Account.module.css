@@ -5,3 +5,7 @@
 .characterCard:hover {
   transform: translateY(-3px);
 }
+
+.settingsCard {
+  max-width: 900px;
+}

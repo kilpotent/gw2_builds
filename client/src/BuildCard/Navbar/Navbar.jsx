@@ -31,8 +31,8 @@ function Navbar() {
               <Link className="btn btn-outline-light btn-sm" to="/my-builds">
                 My Builds
               </Link>
-              <Link className="btn btn-outline-light btn-sm" to="/dashboard">
-                Dashboard
+              <Link className="btn btn-outline-light btn-sm" to="/account">
+                Account
               </Link>
               <button
                 className="btn btn-outline-light btn-sm"
