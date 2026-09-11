@@ -7,21 +7,8 @@ import { getProfessions, getAmulets } from "../../services/gw2Api";
 import { getCharacters } from "../../services/characterService";
 import { createBuild, getBuild, updateBuild } from "../../services/buildService";
 import { runes, sigils, relics } from "../../../data/gear";
+import { PROFESSIONS as PROFESSION_IDS, GAME_MODES } from "../../../data/constants";
 import styles from "./BuildEditor.module.css";
-
-const PROFESSION_IDS = [
-  "Elementalist",
-  "Mesmer",
-  "Necromancer",
-  "Guardian",
-  "Warrior",
-  "Engineer",
-  "Ranger",
-  "Thief",
-  "Revenant",
-];
-
-const GAME_MODES = ["PvE", "PvP", "WvW"];
 
 function BuildEditor() {
   const { user } = useAuth();

@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { getPublicBuilds } from "../../services/buildService";
 import professionBackgrounds from "../../../assets/images/build-background-images/professionBackgrounds";
+import BuildFilters from "../../../components/BuildFilters/BuildFilters";
 import styles from "./PublicBuilds.module.css";
 
 function PublicBuilds() {
@@ -11,6 +12,8 @@ function PublicBuilds() {
   const [builds, setBuilds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [professionFilter, setProfessionFilter] = useState("");
+  const [modeFilter, setModeFilter] = useState("");
 
   useEffect(() => {
     getPublicBuilds()
@@ -19,9 +22,26 @@ function PublicBuilds() {
       .finally(() => setLoading(false));
   }, []);
 
+  const filteredBuilds = useMemo(
+    () =>
+      builds.filter(
+        (b) =>
+          (!professionFilter || b.profession === professionFilter) &&
+          (!modeFilter || b.game_mode === modeFilter),
+      ),
+    [builds, professionFilter, modeFilter],
+  );
+
   return (
     <div className="container mt-4 mb-5">
       <h2 className="mb-3">Public Builds</h2>
+
+      <BuildFilters
+        profession={professionFilter}
+        onProfessionChange={setProfessionFilter}
+        gameMode={modeFilter}
+        onGameModeChange={setModeFilter}
+      />
 
       {loading && <p className="text-muted">Loading builds...</p>}
       {error && <div className="alert alert-danger">{error}</div>}
@@ -32,8 +52,12 @@ function PublicBuilds() {
         </p>
       )}
 
+      {!loading && !error && builds.length > 0 && filteredBuilds.length === 0 && (
+        <p className="text-muted">No builds match those filters.</p>
+      )}
+
       <div className="row g-3">
-        {builds.map((build) => {
+        {filteredBuilds.map((build) => {
           const isOwner = user && build.owner_id === user.id;
           const gear = build.data?.gear || {};
           const sigils = gear.sigils || [null, null];

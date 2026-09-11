@@ -1,0 +1,7 @@
+.filters {
+  margin-bottom: 1rem;
+}
+
+.filters select {
+  min-width: 140px;
+}

@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { getMyBuilds, deleteBuild } from "../../services/buildService";
 import professionBackgrounds from "../../../assets/images/build-background-images/professionBackgrounds";
+import BuildFilters from "../../../components/BuildFilters/BuildFilters";
 import styles from "./MyBuilds.module.css";
 
 function MyBuilds() {
@@ -9,6 +10,8 @@ function MyBuilds() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState(null);
+  const [professionFilter, setProfessionFilter] = useState("");
+  const [modeFilter, setModeFilter] = useState("");
   const [searchParams] = useSearchParams();
   const highlightId = searchParams.get("highlight");
   const highlightRef = useRef(null);
@@ -19,6 +22,16 @@ function MyBuilds() {
       .catch(() => setError("Couldn't load your builds."))
       .finally(() => setLoading(false));
   }, []);
+
+  const filteredBuilds = useMemo(
+    () =>
+      builds.filter(
+        (b) =>
+          (!professionFilter || b.profession === professionFilter) &&
+          (!modeFilter || b.game_mode === modeFilter),
+      ),
+    [builds, professionFilter, modeFilter],
+  );
 
   useEffect(() => {
     if (highlightId && highlightRef.current) {
@@ -49,6 +62,13 @@ function MyBuilds() {
         </Link>
       </div>
 
+      <BuildFilters
+        profession={professionFilter}
+        onProfessionChange={setProfessionFilter}
+        gameMode={modeFilter}
+        onGameModeChange={setModeFilter}
+      />
+
       {loading && <p className="text-muted">Loading your builds...</p>}
       {error && <div className="alert alert-danger">{error}</div>}
 
@@ -58,8 +78,12 @@ function MyBuilds() {
         </p>
       )}
 
+      {!loading && !error && builds.length > 0 && filteredBuilds.length === 0 && (
+        <p className="text-muted">No builds match those filters.</p>
+      )}
+
       <div className="row g-3">
-        {builds.map((build) => {
+        {filteredBuilds.map((build) => {
           const isHighlighted = String(build.id) === highlightId;
           const gear = build.data?.gear || {};
           const sigils = gear.sigils || [null, null];
