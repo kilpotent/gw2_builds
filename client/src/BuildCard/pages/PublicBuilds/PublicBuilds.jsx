@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getPublicBuilds } from "../../services/buildService";
 import professionBackgrounds from "../../../assets/images/build-background-images/professionBackgrounds";
 import BuildFilters from "../../../components/BuildFilters/BuildFilters";
+import { collectGearIcons } from "../../../utils/buildDisplay";
 import styles from "./PublicBuilds.module.css";
 
 function PublicBuilds() {
@@ -59,11 +60,7 @@ function PublicBuilds() {
       <div className="row g-3">
         {filteredBuilds.map((build) => {
           const isOwner = user && build.owner_id === user.id;
-          const gear = build.data?.gear || {};
-          const sigils = gear.sigils || [null, null];
-          const gearPieces = [gear.amulet, gear.rune, sigils[0], sigils[1], gear.relic].filter(
-            Boolean,
-          );
+          const gearPieces = collectGearIcons(build.data);
           return (
           <div className="col-md-6 col-lg-4" key={build.id}>
             <div

@@ -1,0 +1,62 @@
+.set {
+  flex: 1 1 320px;
+  min-width: 300px;
+  padding: 0.75rem;
+}
+
+.setHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.typeToggle {
+  display: flex;
+  border: 1px solid #ced4da;
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.typeToggle button {
+  border: none;
+  background: #fff;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.typeToggle button:first-child {
+  border-right: 1px solid #ced4da;
+}
+
+.typeActive {
+  background: #0d6efd !important;
+  color: #fff;
+}
+
+.slotsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1rem;
+}
+
+.posTopLeft {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.posTopRight {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.posBottomLeft {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.posBottomRight {
+  grid-column: 2;
+  grid-row: 2;
+}

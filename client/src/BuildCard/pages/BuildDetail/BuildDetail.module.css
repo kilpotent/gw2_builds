@@ -12,20 +12,42 @@
   padding: 1.5rem;
 }
 
+.linesStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 .lineCard {
-  background: #f8f9fa;
+  background-color: #f8f9fa;
+  /* GW2's specialization background art doesn't fill its whole source image —
+     some pad on the right, some on the top, inconsistently. Zooming in and
+     anchoring to the bottom-left crops that padding out across all of them. */
+  background-size: 160% 160%;
+  background-position: left bottom;
   border: 1px solid #dee2e6;
   border-radius: 0.5rem;
+}
+
+.lineContent {
   padding: 0.75rem;
-  height: 100%;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.lineCardWithBg .lineContent {
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .lineHeader {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
   font-weight: 600;
+  min-width: 180px;
 }
 
 .lineHeader img {
@@ -41,20 +63,34 @@
   color: #fff;
   padding: 0.1rem 0.35rem;
   border-radius: 0.25rem;
-  margin-left: auto;
 }
 
-.traitRow {
+.traitsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.traitChip {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.2rem 0;
+  gap: 0.4rem;
 }
 
-.traitRow img {
+.traitChip img {
   width: 26px;
   height: 26px;
   border-radius: 50%;
+}
+
+.minorChip {
+  opacity: 0.8;
+}
+
+.minorChip img {
+  width: 20px;
+  height: 20px;
+  border: 1px dashed #adb5bd;
 }
 
 .traitEmpty {
@@ -97,10 +133,33 @@
   border-radius: 50%;
 }
 
+.iconSquare {
+  border-radius: 0.3rem !important;
+}
+
 .gearEmpty {
   color: #6c757d;
   font-style: italic;
   font-size: 0.85rem;
+}
+
+.weaponSetsGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.weaponSetCard {
+  flex: 1 1 320px;
+  min-width: 300px;
+  background: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.weaponSetCard h6 {
+  margin-bottom: 0.5rem;
 }
 
 .description {

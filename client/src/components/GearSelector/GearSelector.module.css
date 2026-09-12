@@ -52,6 +52,10 @@
   flex-shrink: 0;
 }
 
+.iconSquare {
+  border-radius: 0.25rem;
+}
+
 .clearBtn {
   border: none;
   background: transparent;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Fragment } from "react";
 import {
   getProfessionDetails,
   getSpecializations,
@@ -35,6 +35,12 @@ function groupTraitsByTier(spec, traitsById) {
   return [1, 2, 3].map((tier) => majors.filter((t) => t.tier === tier));
 }
 
+// The 3 minor traits are auto-granted (no choice) — one per tier, in order.
+function minorsByTier(spec, traitsById) {
+  const minors = (spec.minor_traits || []).map((id) => traitsById[id]).filter(Boolean);
+  return [1, 2, 3].map((tier) => minors.find((t) => t.tier === tier) || null);
+}
+
 // A GW2-style trait line picker: 3 specialization slots. Hovering an option
 // in a slot's dropdown previews all of that specialization's traits before
 // it's chosen; any slot may hold a core or an elite spec, but only one
@@ -47,8 +53,7 @@ function TraitLineSelector({ profession, initialLines, onChange }) {
 
   const [lines, setLines] = useState(() => toInternalLines(initialLines));
   const [openSlot, setOpenSlot] = useState(null);
-  const [hoveredSpecId, setHoveredSpecId] = useState(null);
-  const [infoTrait, setInfoTrait] = useState(null);
+  const [tooltip, setTooltip] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,7 +64,10 @@ function TraitLineSelector({ profession, initialLines, onChange }) {
         setError("");
         const professionData = await getProfessionDetails(profession);
         const allSpecs = await getSpecializations(professionData.specializations);
-        const traitIds = allSpecs.flatMap((s) => s.major_traits || []);
+        const traitIds = allSpecs.flatMap((s) => [
+          ...(s.major_traits || []),
+          ...(s.minor_traits || []),
+        ]);
         const traits = await getTraits(traitIds);
         if (cancelled) return;
 
@@ -101,6 +109,7 @@ function TraitLineSelector({ profession, initialLines, onChange }) {
           name: spec.name,
           icon: spec.icon,
           elite: spec.elite,
+          background: spec.background,
         },
         traits: line.traitIds.map((traitId) => {
           const trait = traitId ? traitsById[traitId] : null;
@@ -108,6 +117,9 @@ function TraitLineSelector({ profession, initialLines, onChange }) {
             ? { id: trait.id, name: trait.name, icon: trait.icon, tier: trait.tier }
             : null;
         }),
+        minorTraits: minorsByTier(spec, traitsById).map((trait) =>
+          trait ? { id: trait.id, name: trait.name, icon: trait.icon, tier: trait.tier } : null,
+        ),
       };
     });
     onChange(payload);
@@ -133,7 +145,6 @@ function TraitLineSelector({ profession, initialLines, onChange }) {
   }
 
   function toggleSlot(idx) {
-    setHoveredSpecId(null);
     setOpenSlot((prev) => (prev === idx ? null : idx));
   }
 
@@ -142,7 +153,6 @@ function TraitLineSelector({ profession, initialLines, onChange }) {
       prev.map((l, i) => (i === slotIndex ? { specId, traitIds: [null, null, null] } : l)),
     );
     setOpenSlot(null);
-    setHoveredSpecId(null);
   }
 
   function clearSlot(slotIndex, e) {
@@ -159,7 +169,18 @@ function TraitLineSelector({ profession, initialLines, onChange }) {
         return { ...l, traitIds };
       }),
     );
-    setInfoTrait(trait);
+  }
+
+  function showTooltip(trait, e) {
+    setTooltip({ trait, x: e.clientX, y: e.clientY });
+  }
+
+  function moveTooltip(e) {
+    setTooltip((prev) => (prev ? { ...prev, x: e.clientX, y: e.clientY } : prev));
+  }
+
+  function hideTooltip() {
+    setTooltip(null);
   }
 
   if (loading) return <p className="text-muted">Loading specializations…</p>;
@@ -171,123 +192,123 @@ function TraitLineSelector({ profession, initialLines, onChange }) {
         {lines.map((line, idx) => {
           const spec = line.specId ? specsById[line.specId] : null;
           return (
-            <div className={styles.line} key={idx}>
-              <div className={styles.slotHeader}>
+            <div
+              className={`${styles.line} ${spec ? styles.lineWithBg : ""}`}
+              style={spec?.background ? { backgroundImage: `url(${spec.background})` } : undefined}
+              key={idx}
+            >
+              <div className={styles.lineOverlay}>
+              <div className={styles.slotHeaderWrap}>
                 <button
                   type="button"
-                  className={styles.slotButton}
+                  className={styles.specHexButton}
                   onClick={() => toggleSlot(idx)}
+                  aria-label={spec ? spec.name : "Choose specialization"}
                 >
                   {spec ? (
-                    <>
-                      <img src={spec.icon} alt="" className={styles.specIcon} />
-                      <span>{spec.name}</span>
-                      {spec.elite && <span className={styles.eliteBadge}>Elite</span>}
-                    </>
+                    <img src={spec.icon} alt="" />
                   ) : (
-                    <span className={styles.placeholder}>+ Choose specialization</span>
+                    <span className={styles.hexPlus}>+</span>
                   )}
                 </button>
-                {spec && (
-                  <button
-                    type="button"
-                    className={styles.clearBtn}
-                    aria-label="Clear specialization"
-                    onClick={(e) => clearSlot(idx, e)}
-                  >
-                    ×
-                  </button>
+
+                <div className={styles.specCaption}>
+                  {spec ? (
+                    <>
+                      <span className={styles.specName}>{spec.name}</span>
+                      {spec.elite && <span className={styles.eliteBadge}>Elite</span>}
+                      <button
+                        type="button"
+                        className={styles.clearBtn}
+                        aria-label="Clear specialization"
+                        onClick={(e) => clearSlot(idx, e)}
+                      >
+                        ×
+                      </button>
+                    </>
+                  ) : (
+                    <span className={styles.placeholder}>Choose specialization</span>
+                  )}
+                </div>
+
+                {openSlot === idx && (
+                  <div className={styles.dropdown}>
+                    {availableSpecsForSlot(idx).map((option) => (
+                      <div
+                        key={option.id}
+                        className={styles.specOption}
+                        onClick={() => selectSpec(idx, option.id)}
+                      >
+                        <div className={styles.specOptionRow}>
+                          <img src={option.icon} alt="" className={styles.specIcon} />
+                          <span>{option.name}</span>
+                          {option.elite && <span className={styles.eliteBadge}>Elite</span>}
+                        </div>
+                      </div>
+                    ))}
+                    {availableSpecsForSlot(idx).length === 0 && (
+                      <p className={styles.emptyNote}>No more specializations available.</p>
+                    )}
+                  </div>
                 )}
               </div>
 
-              {openSlot === idx && (
-                <div className={styles.dropdown}>
-                  {availableSpecsForSlot(idx).map((option) => (
-                    <div
-                      key={option.id}
-                      className={styles.specOption}
-                      onMouseEnter={() => setHoveredSpecId(option.id)}
-                      onMouseLeave={() =>
-                        setHoveredSpecId((h) => (h === option.id ? null : h))
-                      }
-                      onClick={() => selectSpec(idx, option.id)}
-                    >
-                      <div className={styles.specOptionRow}>
-                        <img src={option.icon} alt="" className={styles.specIcon} />
-                        <span>{option.name}</span>
-                        {option.elite && <span className={styles.eliteBadge}>Elite</span>}
-                      </div>
-
-                      {hoveredSpecId === option.id && (
-                        <div className={styles.traitPreview}>
-                          {groupTraitsByTier(option, traitsById).map((tier, tierIdx) => (
-                            <div className={styles.previewTierRow} key={tierIdx}>
-                              {tier.map((trait) => (
-                                <div
-                                  key={trait.id}
-                                  className={styles.previewTrait}
-                                  onMouseEnter={(e) => {
-                                    e.stopPropagation();
-                                    setInfoTrait(trait);
-                                  }}
-                                >
-                                  <img src={trait.icon} alt="" />
-                                  <span>{trait.name}</span>
-                                </div>
-                              ))}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {availableSpecsForSlot(idx).length === 0 && (
-                    <p className={styles.emptyNote}>No more specializations available.</p>
-                  )}
-                </div>
-              )}
-
               {spec && (
                 <div className={styles.tierGrid}>
-                  {groupTraitsByTier(spec, traitsById).map((tier, tierIdx) => (
-                    <div className={styles.tierRow} key={tierIdx}>
-                      {tier.map((trait) => (
-                        <button
-                          type="button"
-                          key={trait.id}
-                          className={`${styles.traitButton} ${
-                            line.traitIds[tierIdx] === trait.id ? styles.traitSelected : ""
-                          }`}
-                          onMouseEnter={() => setInfoTrait(trait)}
-                          onClick={() => pickTrait(idx, tierIdx, trait)}
-                        >
-                          <img src={trait.icon} alt={trait.name} />
-                        </button>
-                      ))}
-                    </div>
-                  ))}
+                  {groupTraitsByTier(spec, traitsById).map((tier, tierIdx) => {
+                    const minor = minorsByTier(spec, traitsById)[tierIdx];
+                    return (
+                      <Fragment key={tierIdx}>
+                        {minor && (
+                          <div
+                            className={styles.minorHex}
+                            onMouseEnter={(e) => showTooltip(minor, e)}
+                            onMouseMove={moveTooltip}
+                            onMouseLeave={hideTooltip}
+                          >
+                            <img src={minor.icon} alt={minor.name} />
+                          </div>
+                        )}
+                        <div className={styles.tierRow}>
+                          {tier.map((trait) => (
+                            <button
+                              type="button"
+                              key={trait.id}
+                              className={`${styles.traitButton} ${
+                                line.traitIds[tierIdx] === trait.id ? styles.traitSelected : ""
+                              }`}
+                              onMouseEnter={(e) => showTooltip(trait, e)}
+                              onMouseMove={moveTooltip}
+                              onMouseLeave={hideTooltip}
+                              onClick={() => pickTrait(idx, tierIdx, trait)}
+                            >
+                              <img src={trait.icon} alt={trait.name} />
+                            </button>
+                          ))}
+                        </div>
+                      </Fragment>
+                    );
+                  })}
                 </div>
               )}
+            </div>
             </div>
           );
         })}
       </div>
 
-      <div className={styles.infoPanel}>
-        {infoTrait ? (
-          <>
-            <div className={styles.infoHeader}>
-              <img src={infoTrait.icon} alt="" />
-              <h5>{infoTrait.name}</h5>
-            </div>
-            <p>{cleanDescription(infoTrait.description)}</p>
-          </>
-        ) : (
-          <p className={styles.infoPlaceholder}>
-            Hover a specialization or trait to see its details here.
-          </p>
-        )}
-      </div>
+      {tooltip && (
+        <div
+          className={styles.floatingTooltip}
+          style={{ left: tooltip.x + 18, top: tooltip.y + 18 }}
+        >
+          <div className={styles.infoHeader}>
+            <img src={tooltip.trait.icon} alt="" />
+            <h5>{tooltip.trait.name}</h5>
+          </div>
+          <p>{cleanDescription(tooltip.trait.description)}</p>
+        </div>
+      )}
     </div>
   );
 }

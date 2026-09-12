@@ -6,45 +6,93 @@
 
 .linesRow {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .line {
-  position: relative;
-  flex: 1 1 220px;
-  min-width: 220px;
+  width: 50%;
+  min-width: 480px;
+  max-width: 100%;
   background: #f8f9fa;
+  /* GW2's specialization background art doesn't fill its whole source image —
+     some pad on the right, some on the top, inconsistently. Zooming in and
+     anchoring to the bottom-left crops that padding out across all of them. */
+  background-size: 160% 160%;
+  background-position: left bottom;
   border: 1px solid #dee2e6;
   border-radius: 0.5rem;
+}
+
+.lineOverlay {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
   padding: 0.5rem;
+  border-radius: 0.5rem;
 }
 
-.slotHeader {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
+.lineWithBg .lineOverlay {
+  background: rgba(255, 255, 255, 0.72);
 }
 
-.slotButton {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: #fff;
-  border: 1px solid #ced4da;
-  border-radius: 0.375rem;
-  padding: 0.4rem 0.6rem;
-  text-align: left;
+.slotHeaderWrap {
+  position: relative;
+  width: 84px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.specHexButton {
+  width: 76px;
+  height: 76px;
+  padding: 0;
   cursor: pointer;
+  overflow: hidden;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
 }
 
-.slotButton:hover {
+.specHexButton img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.specHexButton:hover {
   border-color: #86b7fe;
+}
+
+.hexPlus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: #adb5bd;
+  font-size: 1.5rem;
+}
+
+.specCaption {
+  margin-top: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.specName {
+  font-size: 0.8rem;
+  font-weight: 600;
+  max-width: 84px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .placeholder {
   color: #6c757d;
+  font-size: 0.8rem;
 }
 
 .specIcon {
@@ -61,6 +109,9 @@
   color: #fff;
   padding: 0.1rem 0.35rem;
   border-radius: 0.25rem;
+}
+
+.specOptionRow .eliteBadge {
   margin-left: auto;
 }
 
@@ -79,7 +130,7 @@
   z-index: 20;
   top: 100%;
   left: 0;
-  right: 0;
+  width: 260px;
   margin-top: 0.25rem;
   background: #fff;
   border: 1px solid #ced4da;
@@ -87,6 +138,7 @@
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
   max-height: 420px;
   overflow-y: auto;
+  text-align: left;
 }
 
 .specOption {
@@ -109,38 +161,6 @@
   gap: 0.5rem;
 }
 
-.traitPreview {
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px dashed #ced4da;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.previewTierRow {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.previewTrait {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.8rem;
-  background: #fff;
-  border: 1px solid #e9ecef;
-  border-radius: 0.3rem;
-  padding: 0.2rem 0.35rem;
-}
-
-.previewTrait img {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-}
-
 .emptyNote {
   margin: 0;
   padding: 0.6rem;
@@ -150,24 +170,42 @@
 
 .tierGrid {
   display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin-top: 0.6rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.minorHex {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  opacity: 0.85;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+.minorHex img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .tierRow {
   display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
   gap: 0.4rem;
-  justify-content: center;
 }
 
 .traitButton {
   width: 44px;
   height: 44px;
   padding: 0;
-  border-radius: 50%;
-  border: 2px solid #ced4da;
-  background: #fff;
+  border-radius: 0.375rem;
+  border: none;
+  background: none;
   cursor: pointer;
   overflow: hidden;
 }
@@ -175,23 +213,27 @@
 .traitButton img {
   width: 100%;
   height: 100%;
+  border-radius: 0.2rem;
 }
 
 .traitButton:hover {
-  border-color: #86b7fe;
+  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.35);
 }
 
 .traitSelected {
-  border-color: #b8860b;
-  box-shadow: 0 0 0 2px rgba(184, 134, 11, 0.35);
+  box-shadow: 0 0 0 2px rgba(184, 134, 11, 0.6);
 }
 
-.infoPanel {
-  min-height: 90px;
-  background: #f8f9fa;
+.floatingTooltip {
+  position: fixed;
+  z-index: 1000;
+  width: 280px;
+  background: #fff;
   border: 1px solid #dee2e6;
   border-radius: 0.5rem;
   padding: 0.75rem 1rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2);
+  pointer-events: none;
 }
 
 .infoHeader {
@@ -212,13 +254,8 @@
   font-size: 1rem;
 }
 
-.infoPanel p {
+.floatingTooltip p {
   margin: 0;
   white-space: pre-line;
   color: #495057;
-}
-
-.infoPlaceholder {
-  color: #6c757d;
-  font-style: italic;
 }

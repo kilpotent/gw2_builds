@@ -2,8 +2,17 @@ import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import TraitLineSelector from "../../../components/TraitLineSelector/TraitLineSelector";
 import GearSelector from "../../../components/GearSelector/GearSelector";
+import WeaponSetSelector, {
+  EMPTY_WEAPON_SET,
+  toWeaponSetState,
+} from "../../../components/WeaponSetSelector/WeaponSetSelector";
 import { useAuth } from "../../context/AuthContext";
-import { getProfessions, getAmulets } from "../../services/gw2Api";
+import {
+  getProfessions,
+  getAmulets,
+  getProfessionWeapons,
+  getProfessionSkills,
+} from "../../services/gw2Api";
 import { getCharacters } from "../../services/characterService";
 import { createBuild, getBuild, updateBuild } from "../../services/buildService";
 import { runes, sigils, relics } from "../../../data/gear";
@@ -28,9 +37,18 @@ function BuildEditor() {
   const [amulets, setAmulets] = useState([]);
   const [amuletId, setAmuletId] = useState(null);
   const [runeId, setRuneId] = useState(null);
-  const [sigil1Id, setSigil1Id] = useState(null);
-  const [sigil2Id, setSigil2Id] = useState(null);
   const [relicId, setRelicId] = useState(null);
+
+  const [weapons, setWeapons] = useState([]);
+  const [weaponSet1, setWeaponSet1] = useState(EMPTY_WEAPON_SET());
+  const [weaponSet2, setWeaponSet2] = useState(EMPTY_WEAPON_SET());
+
+  const [profSkills, setProfSkills] = useState([]);
+  const [healId, setHealId] = useState(null);
+  const [utility1Id, setUtility1Id] = useState(null);
+  const [utility2Id, setUtility2Id] = useState(null);
+  const [utility3Id, setUtility3Id] = useState(null);
+  const [eliteId, setEliteId] = useState(null);
 
   const [characters, setCharacters] = useState([]);
   const [characterId, setCharacterId] = useState("");
@@ -56,6 +74,26 @@ function BuildEditor() {
       .then(setAmulets)
       .catch(() => setAmulets([]));
   }, []);
+
+  useEffect(() => {
+    if (!profession) {
+      setWeapons([]);
+      return;
+    }
+    getProfessionWeapons(profession)
+      .then(setWeapons)
+      .catch(() => setWeapons([]));
+  }, [profession]);
+
+  useEffect(() => {
+    if (!profession) {
+      setProfSkills([]);
+      return;
+    }
+    getProfessionSkills(profession)
+      .then(setProfSkills)
+      .catch(() => setProfSkills([]));
+  }, [profession]);
 
   useEffect(() => {
     if (!user) {
@@ -88,9 +126,17 @@ function BuildEditor() {
         const gear = build.data.gear || {};
         setAmuletId(gear.amulet?.id ?? null);
         setRuneId(gear.rune?.id ?? null);
-        setSigil1Id(gear.sigils?.[0]?.id ?? null);
-        setSigil2Id(gear.sigils?.[1]?.id ?? null);
         setRelicId(gear.relic?.id ?? null);
+        const weaponsData = build.data.weapons || {};
+        setWeaponSet1(toWeaponSetState(weaponsData.set1));
+        setWeaponSet2(toWeaponSetState(weaponsData.set2));
+        const skillsData = build.data.skills || {};
+        setHealId(skillsData.heal?.id ?? null);
+        const utilities = skillsData.utilities || [];
+        setUtility1Id(utilities[0]?.id ?? null);
+        setUtility2Id(utilities[1]?.id ?? null);
+        setUtility3Id(utilities[2]?.id ?? null);
+        setEliteId(skillsData.elite?.id ?? null);
       })
       .catch(() => {
         if (!cancelled) setLoadError("This build doesn't exist or isn't yours to edit.");
@@ -108,6 +154,13 @@ function BuildEditor() {
     if (isEditing) return;
     setProfession(profId);
     setCharacterId("");
+    setWeaponSet1(EMPTY_WEAPON_SET());
+    setWeaponSet2(EMPTY_WEAPON_SET());
+    setHealId(null);
+    setUtility1Id(null);
+    setUtility2Id(null);
+    setUtility3Id(null);
+    setEliteId(null);
   }
 
   function pick(list, id) {
@@ -116,10 +169,37 @@ function BuildEditor() {
     return item ? { id: item.id, name: item.name, icon: item.icon } : null;
   }
 
+  function buildWeaponSetPayload(ws) {
+    return {
+      type: ws.type,
+      main: ws.type === "oneHand" ? pick(weapons, ws.mainId) : null,
+      off: ws.type === "oneHand" ? pick(weapons, ws.offId) : null,
+      twoHand: ws.type === "twoHand" ? pick(weapons, ws.twoHandId) : null,
+      sigil1: pick(sigils, ws.sigil1Id),
+      sigil2: pick(sigils, ws.sigil2Id),
+    };
+  }
+
   const matchingCharacters = characters.filter((c) => c.profession === profession);
   const isComplete =
     profession &&
-    lines.every((line) => line && line.traits.every((t) => t));
+    lines.every((line) => line && line.traits.every((t) => t)) &&
+    amuletId &&
+    runeId &&
+    relicId;
+
+  // Elite/core-spec-locked skills (e.g. Berserker's Rage skills, or an elite
+  // spec's unique heal) only show up once that specialization is chosen.
+  const chosenSpecIds = lines.filter(Boolean).map((l) => l.specialization.id);
+
+  function skillsFor(slot, excludeIds = []) {
+    return profSkills.filter(
+      (s) =>
+        s.slot === slot &&
+        (!s.specialization || chosenSpecIds.includes(s.specialization)) &&
+        !excludeIds.includes(s.id),
+    );
+  }
 
   async function handleSave(e) {
     e.preventDefault();
@@ -134,12 +214,30 @@ function BuildEditor() {
       setSaveError("Choose a character to save this build under.");
       return;
     }
+    if (!isComplete) {
+      setSaveError(
+        "Choose all 3 specializations, one trait per tier, and an amulet, rune, and relic before saving.",
+      );
+      return;
+    }
 
     const gear = {
       amulet: pick(amulets, amuletId),
       rune: pick(runes, runeId),
-      sigils: [pick(sigils, sigil1Id), pick(sigils, sigil2Id)],
       relic: pick(relics, relicId),
+    };
+    const weaponsPayload = {
+      set1: buildWeaponSetPayload(weaponSet1),
+      set2: buildWeaponSetPayload(weaponSet2),
+    };
+    const skillsPayload = {
+      heal: pick(profSkills, healId),
+      utilities: [
+        pick(profSkills, utility1Id),
+        pick(profSkills, utility2Id),
+        pick(profSkills, utility3Id),
+      ],
+      elite: pick(profSkills, eliteId),
     };
 
     try {
@@ -149,7 +247,14 @@ function BuildEditor() {
           buildName: buildName.trim(),
           gameMode,
           isPublic,
-          data: { profession, lines, gear, description: description.trim() },
+          data: {
+            profession,
+            lines,
+            gear,
+            weapons: weaponsPayload,
+            skills: skillsPayload,
+            description: description.trim(),
+          },
         });
         setSaveSuccess("Build updated!");
       } else {
@@ -158,7 +263,14 @@ function BuildEditor() {
           buildName: buildName.trim(),
           gameMode,
           isPublic,
-          data: { profession, lines, gear, description: description.trim() },
+          data: {
+            profession,
+            lines,
+            gear,
+            weapons: weaponsPayload,
+            skills: skillsPayload,
+            description: description.trim(),
+          },
         });
         setSaveSuccess("Build saved!");
       }
@@ -234,6 +346,7 @@ function BuildEditor() {
               value={amuletId}
               onChange={setAmuletId}
               onClear={() => setAmuletId(null)}
+              shape="square"
             />
             <GearSelector
               label="Rune"
@@ -241,20 +354,7 @@ function BuildEditor() {
               value={runeId}
               onChange={setRuneId}
               onClear={() => setRuneId(null)}
-            />
-            <GearSelector
-              label="Sigil 1"
-              options={sigils}
-              value={sigil1Id}
-              onChange={setSigil1Id}
-              onClear={() => setSigil1Id(null)}
-            />
-            <GearSelector
-              label="Sigil 2"
-              options={sigils}
-              value={sigil2Id}
-              onChange={setSigil2Id}
-              onClear={() => setSigil2Id(null)}
+              shape="square"
             />
             <GearSelector
               label="Relic"
@@ -262,6 +362,72 @@ function BuildEditor() {
               value={relicId}
               onChange={setRelicId}
               onClear={() => setRelicId(null)}
+              shape="square"
+            />
+          </div>
+        </div>
+      )}
+
+      {profession && (
+        <div className={`${styles.gearSection} mt-4`}>
+          <h4>Weapons</h4>
+          <div className={styles.weaponSetsRow}>
+            <WeaponSetSelector
+              label="Weapon Set 1"
+              weapons={weapons}
+              sigils={sigils}
+              value={weaponSet1}
+              onChange={setWeaponSet1}
+            />
+            <WeaponSetSelector
+              label="Weapon Set 2"
+              weapons={weapons}
+              sigils={sigils}
+              value={weaponSet2}
+              onChange={setWeaponSet2}
+            />
+          </div>
+        </div>
+      )}
+
+      {profession && (
+        <div className={`${styles.gearSection} mt-4`}>
+          <h4>Skills</h4>
+          <div className={styles.gearRow}>
+            <GearSelector
+              label="Heal Skill"
+              options={skillsFor("Heal")}
+              value={healId}
+              onChange={setHealId}
+              onClear={() => setHealId(null)}
+            />
+            <GearSelector
+              label="Utility 1"
+              options={skillsFor("Utility", [utility2Id, utility3Id].filter(Boolean))}
+              value={utility1Id}
+              onChange={setUtility1Id}
+              onClear={() => setUtility1Id(null)}
+            />
+            <GearSelector
+              label="Utility 2"
+              options={skillsFor("Utility", [utility1Id, utility3Id].filter(Boolean))}
+              value={utility2Id}
+              onChange={setUtility2Id}
+              onClear={() => setUtility2Id(null)}
+            />
+            <GearSelector
+              label="Utility 3"
+              options={skillsFor("Utility", [utility1Id, utility2Id].filter(Boolean))}
+              value={utility3Id}
+              onChange={setUtility3Id}
+              onClear={() => setUtility3Id(null)}
+            />
+            <GearSelector
+              label="Elite Skill"
+              options={skillsFor("Elite")}
+              value={eliteId}
+              onChange={setEliteId}
+              onClear={() => setEliteId(null)}
             />
           </div>
         </div>
@@ -285,8 +451,8 @@ function BuildEditor() {
 
           {!isComplete && (
             <div className="alert alert-warning">
-              Choose all 3 specializations and one trait per tier to complete
-              the build.
+              Choose all 3 specializations, one trait per tier, and an amulet,
+              rune, and relic to complete the build.
             </div>
           )}
 
@@ -300,7 +466,7 @@ function BuildEditor() {
           {user && matchingCharacters.length === 0 && (
             <div className="alert alert-info">
               You don't have a {profession} character yet. Create one from
-              your <Link to="/dashboard">Dashboard</Link> first.
+              your <Link to="/account">Account</Link> page first.
             </div>
           )}
 
@@ -367,7 +533,7 @@ function BuildEditor() {
               <button
                 type="submit"
                 className="btn btn-primary w-100"
-                disabled={!user || saving}
+                disabled={!user || saving || !isComplete}
               >
                 {saving ? "Saving…" : "Save"}
               </button>

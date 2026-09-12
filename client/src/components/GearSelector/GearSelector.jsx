@@ -4,11 +4,12 @@ import styles from "./GearSelector.module.css";
 // A single-item picker for gear (amulet/rune/sigil/relic): click to open a
 // searchable dropdown of icon+name options, hover an option to preview its
 // effect before choosing it.
-function GearSelector({ label, options, value, onChange, onClear }) {
+function GearSelector({ label, options, value, onChange, onClear, shape = "circle" }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [hoveredId, setHoveredId] = useState(null);
 
+  const iconClass = `${styles.icon} ${shape === "square" ? styles.iconSquare : ""}`;
   const selected = options.find((o) => o.id === value);
   const filtered = search
     ? options.filter((o) => o.name.toLowerCase().includes(search.toLowerCase()))
@@ -32,7 +33,7 @@ function GearSelector({ label, options, value, onChange, onClear }) {
         <button type="button" className={styles.selectButton} onClick={toggle}>
           {selected ? (
             <>
-              <img src={selected.icon} alt="" className={styles.icon} />
+              <img src={selected.icon} alt="" className={iconClass} />
               <span>{selected.name}</span>
             </>
           ) : (
@@ -71,7 +72,7 @@ function GearSelector({ label, options, value, onChange, onClear }) {
                 onClick={() => select(opt.id)}
               >
                 <div className={styles.optionRow}>
-                  <img src={opt.icon} alt="" className={styles.icon} />
+                  <img src={opt.icon} alt="" className={iconClass} />
                   <span>{opt.name}</span>
                 </div>
                 {hoveredId === opt.id && opt.description && (

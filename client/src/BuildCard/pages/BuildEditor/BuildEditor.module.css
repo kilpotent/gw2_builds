@@ -52,3 +52,15 @@
   flex-wrap: wrap;
   gap: 0.75rem;
 }
+
+.weaponSetsRow {
+  display: flex;
+  flex-wrap: wrap;
+  background: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+}
+
+.weaponSetsRow > div:not(:last-child) {
+  border-right: 1px solid #dee2e6;
+}

@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { getMyBuilds, deleteBuild } from "../../services/buildService";
 import professionBackgrounds from "../../../assets/images/build-background-images/professionBackgrounds";
 import BuildFilters from "../../../components/BuildFilters/BuildFilters";
+import { collectGearIcons } from "../../../utils/buildDisplay";
 import styles from "./MyBuilds.module.css";
 
 function MyBuilds() {
@@ -85,11 +86,7 @@ function MyBuilds() {
       <div className="row g-3">
         {filteredBuilds.map((build) => {
           const isHighlighted = String(build.id) === highlightId;
-          const gear = build.data?.gear || {};
-          const sigils = gear.sigils || [null, null];
-          const gearPieces = [gear.amulet, gear.rune, sigils[0], sigils[1], gear.relic].filter(
-            Boolean,
-          );
+          const gearPieces = collectGearIcons(build.data);
           return (
             <div className="col-md-6 col-lg-4" key={build.id}>
               <div
